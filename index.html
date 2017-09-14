@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Invoice FrontEnd</title>
+  <meta charset='utf-8'>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular.min.js"></script>
+  <script type="text/javascript" src="app/main.js"></script>
+  <script type="text/javascript" src="lib/ui-bootstrap-2.5.0.js"></script>
+    <script type="text/javascript" src="lib/ui-bootstrap-tpls-2.5.0.min.js"></script>
+</head>
+<body ng-app="invoicing" ng-controller="InvoiceCtrl" >
+  <form name="InvoiceForm" id="InvoiceForm">
+    <div class="container" width="800px" id="invoice" >
+      <div class="row">
+        <div class="col-xs-12 heading">
+          INVOICE
+        </div>
+      </div>
+      <div class="row infos">
+        <div class="col-xs-12">
+          <div class="col-xs-2">Invoice Id
+          </div>
+          <div class="col-xs-10">
+            <div class="input-container"> <input type="text" name="invoiceId" ng-model="invoice.invoiceId" ng-required="true" placeholder="Invoice Id"/>
+              <span class="help-block"
+                ng-show="InvoiceForm.invoiceId.$invalid && !InvoiceForm.invoiceId.$pristine">
+              InvoiceId is required.
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-12">
+          <div class="col-xs-2">Name
+          </div>
+          <div class="col-xs-10">
+            <div class="input-container"> <input type="text" name="name" ng-model="invoice.customer_info.name" ng-required="true" placeholder="Name"/>
+              <span class="help-block"
+                ng-show="InvoiceForm.name.$invalid && !InvoiceForm.name.$pristine">
+              You name is required.
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-12">
+          <div class="col-xs-2">Email
+          </div>
+          <div class="col-xs-10">
+            <div class="input-container"> <input type="email" name="email" ng-model="invoice.customer_info.web_link" ng-required="true" placeholder="Email Id"/>
+              <span class="help-block"
+                ng-show="InvoiceForm.email.$invalid && !InvoiceForm.email.$pristine">
+              Email is required.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xs-12">
+          <div class="col-xs-2">Due Date
+          </div>
+          <div class="col-xs-10">
+            <div class="input-container">
+              <input type="text" class="form-control" uib-datepicker-popup="{{dateFormat}}" ng-model="invoice.customer_info.date"
+              name="availableDate" is-open="availableDatePopup.opened"
+              datepicker-options="availableDateOptions" ng-required="true"
+              close-text="Close" ng-click="OpenAvailableDate()" ng-change="ChangeExpiryMinDate(AvailableDate)" placeholder="Invoice Date" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="items-table">
+        <div class="row header">
+          <div class="col-xs-1">&nbsp;</div>
+          <div class="col-xs-5">Description</div>
+          <div class="col-xs-2">Quantity</div>
+          <div class="col-xs-2">Cost {{currencySymbol}}</div>
+          <div class="col-xs-2 text-right">Total</div>
+        </div>
+        <div class="row invoice-item" ng-repeat="item in invoice.items" ng-animate="'slide-down'">
+          <ng-form name="userFieldForm">
+            <div class="col-xs-1 remove-item-container">
+              <a href ng-click="removeItem(item)" class="btn">[X]</a>
+            </div>
+            <div class="col-xs-5 input-container">
+              <input ng-model="item.description" name="description" uib-typeahead="fruit for fruit in fruits | filter:$viewValue |limitTo:8" ng-required="true" placeholder="Description" />
+                <span class="help-block"
+                ng-show="userFieldForm.description.$invalid">
+                  Description required.
+              </span>
+            </div>
+            <div class="col-xs-2 input-container">
+              <input ng-model="item.qty" value="1" size="10" name="qty" ng-required="true" ng-validate="integer" />
+              <span class="help-block"
+                ng-show="userFieldForm.qty.$invalid">
+                  Quantity required.
+              </span>
+            </div>
+            <div class="col-xs-2 input-container">
+              <input ng-model="item.cost" value="0.00" ng-validate="number" name="cost" ng-required="true" size="10" />
+              <span class="help-block"
+                ng-show="userFieldForm.cost.$invalid">
+                  Amount required.
+              </span>
+            </div>
+            <div class="col-xs-2 text-right input-container">
+              {{item.cost * item.qty | currency: currencySymbol}}
+            </div>
+          </ng form>
+        </div>
+        <div class="row invoice-item">
+          <div class="col-xs-12 add-item-container" >
+            <a class="btn btn-primary" href ng-click="addItem()" >+</a>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-10 text-right">Sub Total</div>
+          <div class="col-xs-2 text-right">{{invoiceSubTotal() | currency: currencySymbol}}</div>
+        </div>
+        <div class="row">
+          <div class="col-xs-10 text-right">Tax(%): <input ng-model="invoice.tax" ng-validate="number" style="width:43px"></div>
+          <div class="col-xs-2 text-right">{{calculateTax() | currency: currencySymbol}}</div>
+        </div>
+        <div class="row">
+          <div class="col-xs-10 text-right">Grand Total:</div>
+          <div class="col-xs-2 text-right">{{calculateGrandTotal() | currency: currencySymbol}}</div>
+        </div>
+      </div>
+      <div class="row actions">
+        <a href="#" class="btn btn-primary" button type="submit" ng-disabled="!InvoiceForm.$valid" ng-click="saveNewInvoice()">Save</a>
+        <a href="#" class="btn btn-primary" type="reset" ng-click="reset()">Reset</a>
+      </div>
+    </div>
+  </form>
+</body>
+</html>
